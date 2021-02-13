@@ -81,8 +81,8 @@ public class DisplayRestaurants extends AppCompatActivity implements ActivityCom
 
     private Double latitude, longitude;
 
-    //private static final String APIKeyGoogle = "AIzaSyC5B74OoRPoAYEeTyC91ML8g45rcPWMbIU";
-    private static final String APIKeyGoogle = "AIzaSyBJlBV7wLuK_0Rq2WVaTP_PNllzvnSsC6o";
+    
+    private static final String APIKeyGoogle = "INSERT API";
 
     // https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=-33.8670522,151.1957362&radius=1500&type=restaurant&keyword=cruise&key=YOUR_API_KEY
     private String api_url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?";
