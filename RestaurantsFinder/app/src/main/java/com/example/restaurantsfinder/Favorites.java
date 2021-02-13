@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -18,6 +19,8 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -36,6 +39,9 @@ public class Favorites extends AppCompatActivity implements BottomNavigationView
 
     private List<Restaurant> favs;
 
+    // Firebase
+    FirebaseUser user;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,9 +51,21 @@ public class Favorites extends AppCompatActivity implements BottomNavigationView
 
         favs = new ArrayList<>();
 
-        userID = "feffo";
+
+
+        user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null) { userID = user.getEmail(); }
+        else {
+            Toast.makeText(Favorites.this, "Problem with user Login again", Toast.LENGTH_LONG).show();
+            startActivity(new Intent(Favorites.this, LoginActivity.class));
+        }
+
+
+
+
 
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottomNavigationViewFav);
+        bottomNavigationView.setSelectedItemId(R.id.bottom_fav); // se non va provare a cambiare questo
         bottomNavigationView.setOnNavigationItemSelectedListener(this);
 
         recyclerView = findViewById(R.id.favoritesRecyclerView);
@@ -81,6 +99,10 @@ public class Favorites extends AppCompatActivity implements BottomNavigationView
 
                 try {
                     JSONArray results = response.getJSONArray("results");
+
+                    if (results.length() == 0) {
+                        Toast.makeText(Favorites.this, "No restaurants added yet!", Toast.LENGTH_LONG).show();
+                    }
 
 
                     int numberToDisplay = 50;
@@ -130,11 +152,18 @@ public class Favorites extends AppCompatActivity implements BottomNavigationView
             case R.id.bottom_home:
                 intent = new Intent(Favorites.this, MainActivity.class);
                 startActivity(intent);
+                overridePendingTransition(0, 0);
+                return true;
 
 
             case R.id.bottom_res:
                 intent = new Intent(Favorites.this, DisplayRestaurants.class);
                 startActivity(intent);
+                overridePendingTransition(0, 0);
+                return true;
+
+            case R.id.bottom_fav:
+                return true;
 
 
         }

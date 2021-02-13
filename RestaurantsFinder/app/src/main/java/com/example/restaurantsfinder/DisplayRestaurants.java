@@ -79,7 +79,7 @@ public class DisplayRestaurants extends AppCompatActivity implements ActivityCom
 
 
 
-    private String latitude, longitude;
+    private Double latitude, longitude;
 
     //private static final String APIKeyGoogle = "AIzaSyC5B74OoRPoAYEeTyC91ML8g45rcPWMbIU";
     private static final String APIKeyGoogle = "AIzaSyBJlBV7wLuK_0Rq2WVaTP_PNllzvnSsC6o";
@@ -98,6 +98,9 @@ public class DisplayRestaurants extends AppCompatActivity implements ActivityCom
 
     private List<Restaurant> restaurants;
 
+    FusedLocationProviderClient mFusedLocationClient;
+
+
     // Initialize recycler view to display restaurants
     private RecyclerView recyclerView;
     RecyclerView.Adapter mAdapter;
@@ -115,12 +118,12 @@ public class DisplayRestaurants extends AppCompatActivity implements ActivityCom
         queue = Volley.newRequestQueue(DisplayRestaurants.this);
 
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottomNavigationViewRes);
+        bottomNavigationView.setSelectedItemId(R.id.bottom_res); // se non va provare a cambiare questo
         bottomNavigationView.setOnNavigationItemSelectedListener(this);
 
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
-        Intent intent = getIntent();
-        latitude = intent.getStringExtra("latitude");
-        longitude = intent.getStringExtra("longitude");
+
 
         restaurants = new ArrayList<>();
 
@@ -133,10 +136,117 @@ public class DisplayRestaurants extends AppCompatActivity implements ActivityCom
         //recyclerView.setHasFixedSize(true);
         recyclerView.setAdapter(mAdapter);
 
-        String url = composeUrl();
-        callRestaurantApi(url);
+        showProgressBar();
+        requestNewLocationData();
+        //getLastLocation();
+
+
 
     }
+
+    @SuppressLint("MissingPermission")
+    private void getLastLocation() {
+        // check if permissions are given
+        if (checkPermissions()) {
+
+            // check if location is enabled
+            if (isLocationEnabled()) {
+
+                // getting last
+                // location from
+                // FusedLocationClient
+                // object
+                mFusedLocationClient.getLastLocation().addOnCompleteListener(new OnCompleteListener<Location>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Location> task) {
+                        Location location = task.getResult();
+                        if (location == null) {
+                            requestNewLocationData();
+                        } else {
+
+                            longitude = location.getLongitude();
+                            latitude = location.getLatitude();
+                            String url = composeUrl();
+                            callRestaurantApi(url);
+                        }
+                    }
+                });
+            } else {
+                Toast.makeText(this, "Please turn on" + " your location...", Toast.LENGTH_LONG).show();
+                Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                startActivity(intent);
+            }
+        } else {
+            // if permissions aren't available,
+            // request for permissions
+            requestPermissions();
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private void requestNewLocationData() {
+
+        // Initializing LocationRequest
+        // object with appropriate methods
+        LocationRequest mLocationRequest = new LocationRequest();
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        mLocationRequest.setInterval(5);
+        mLocationRequest.setFastestInterval(0);
+        mLocationRequest.setNumUpdates(1);
+
+        // setting LocationRequest
+        // on FusedLocationClient
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
+    }
+
+    private LocationCallback mLocationCallback = new LocationCallback() {
+
+        @Override
+        public void onLocationResult(LocationResult locationResult) {
+            Location mLastLocation = locationResult.getLastLocation();
+
+            longitude = mLastLocation.getLongitude();
+            latitude = mLastLocation.getLatitude();
+            String url = composeUrl();
+            callRestaurantApi(url);
+
+        }
+    };
+
+    // method to check for permissions
+    private boolean checkPermissions() {
+        return ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+
+    }
+
+    // method to request for permissions
+    private void requestPermissions() {
+        ActivityCompat.requestPermissions(this, new String[]{
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+                Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_ID);
+    }
+
+    // method to check
+    // if location is enabled
+    private boolean isLocationEnabled() {
+        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+    }
+
+    // If everything is alright then
+    @Override
+    public void
+    onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == PERMISSION_ID) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                getLastLocation();
+            }
+        }
+    }
+
 
 
 
@@ -188,6 +298,7 @@ public class DisplayRestaurants extends AppCompatActivity implements ActivityCom
                             e.printStackTrace();
                         }
 
+                        hideProgressBar();
                         mAdapter.notifyDataSetChanged();
 
                     }
@@ -200,7 +311,7 @@ public class DisplayRestaurants extends AppCompatActivity implements ActivityCom
         });
 
         // Add the request to the RequestQueue.
-
+        hideProgressBar();
         queue.add(jsonRequest);
 
     }
@@ -214,16 +325,31 @@ public class DisplayRestaurants extends AppCompatActivity implements ActivityCom
             case R.id.bottom_home:
                 intent = new Intent(DisplayRestaurants.this, MainActivity.class);
                 startActivity(intent);
+                overridePendingTransition(0, 0);
+                return true;
 
 
             case R.id.bottom_fav:
                 intent = new Intent(DisplayRestaurants.this, Favorites.class);
                 startActivity(intent);
+                overridePendingTransition(0, 0);
+                return true;
+
+            case R.id.bottom_res:
+                return true;
 
 
         }
 
         return false;
+    }
+
+    private void hideProgressBar() {
+        findViewById(R.id.progressBarRestaurant).setVisibility(View.INVISIBLE);
+    }
+
+    private void showProgressBar() {
+        findViewById(R.id.progressBarRestaurant).setVisibility(View.VISIBLE);
     }
 
 

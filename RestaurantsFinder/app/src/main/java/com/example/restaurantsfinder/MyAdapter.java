@@ -23,6 +23,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.auth.FirebaseAuth;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -31,6 +32,8 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
 
     private List<Restaurant> values = new ArrayList<>();
     private static RequestQueue queue;
+
+    private static String  userID;
 
 
     // Provide a reference to the views for each data item
@@ -44,9 +47,6 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
         public TextView vicinity;
         public ImageView favorite;
         public View layout;
-
-
-
 
 
 
@@ -116,7 +116,7 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
                 Snackbar.make(v, "Added to favorites!", Snackbar.LENGTH_LONG).show();
 
                 try {
-                    callServer(restaurant);
+                    addFav(restaurant);
 
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -132,17 +132,19 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
         return values.size();
     }
 
-    public static void callServer(Restaurant restaurant) throws JSONException {
+    public static void addFav(Restaurant restaurant) throws JSONException {
 
 
-        String url = "http://10.0.2.2:5000/ciao";
+        String url = "http://10.0.2.2:5000/add_fav";
         JSONObject postData = new JSONObject();
         try {
             postData.put("name", restaurant.name);
             postData.put("vicinity", restaurant.vicinity);
             postData.put("rating", restaurant.rating);
             postData.put("numberRatings", restaurant.numberRatings);
-            postData.put("userID", "feffo");
+
+            userID = FirebaseAuth.getInstance().getCurrentUser().getEmail();
+            postData.put("userID", userID);
 
         } catch (JSONException e) {
             e.printStackTrace();
