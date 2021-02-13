@@ -1,15 +1,14 @@
 package com.example.restaurantsfinder;
 
-import androidx.annotation.NonNull;
+
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
-import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.Request;
@@ -38,12 +37,15 @@ public class Favorites extends AppCompatActivity implements BottomNavigationView
     RecyclerView.Adapter favAdapter;
 
     private List<Restaurant> favs;
+    TextView nofav;
 
     // Firebase
-    FirebaseUser user;
+    private FirebaseUser user;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_favorites);
 
@@ -51,8 +53,7 @@ public class Favorites extends AppCompatActivity implements BottomNavigationView
 
         favs = new ArrayList<>();
 
-
-
+        // get user id
         user = FirebaseAuth.getInstance().getCurrentUser();
         if (user != null) { userID = user.getEmail(); }
         else {
@@ -61,11 +62,9 @@ public class Favorites extends AppCompatActivity implements BottomNavigationView
         }
 
 
-
-
-
+        // Initialize bottom bar
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottomNavigationViewFav);
-        bottomNavigationView.setSelectedItemId(R.id.bottom_fav); // se non va provare a cambiare questo
+        bottomNavigationView.setSelectedItemId(R.id.bottom_fav);
         bottomNavigationView.setOnNavigationItemSelectedListener(this);
 
         recyclerView = findViewById(R.id.favoritesRecyclerView);
@@ -75,8 +74,9 @@ public class Favorites extends AppCompatActivity implements BottomNavigationView
         recyclerView.setLayoutManager(layoutManager);
         recyclerView.setAdapter(favAdapter);
 
-
+        nofav = findViewById(R.id.nofavsAdded);
         try {
+            // Call server to obtain favourites restaurants of the user
             getFavs();
         } catch (JSONException e) {
             e.printStackTrace();
@@ -86,9 +86,10 @@ public class Favorites extends AppCompatActivity implements BottomNavigationView
 
 
 
-
     private void getFavs() throws JSONException {
 
+
+        // url of the server to retrieve favourites of the user
         String url = "http://10.0.2.2:5000/getFavs?userID="+ userID;
 
 
@@ -96,12 +97,12 @@ public class Favorites extends AppCompatActivity implements BottomNavigationView
             @Override
             public void onResponse(JSONObject response) {
 
-
                 try {
                     JSONArray results = response.getJSONArray("results");
-
+                    System.out.println(results);
                     if (results.length() == 0) {
-                        Toast.makeText(Favorites.this, "No restaurants added yet!", Toast.LENGTH_LONG).show();
+
+                        nofav.setText("No restaurants added yet :(");
                     }
 
 
@@ -127,7 +128,6 @@ public class Favorites extends AppCompatActivity implements BottomNavigationView
                     e.printStackTrace();
                 }
 
-
                 favAdapter.notifyDataSetChanged();
             }
         }, new Response.ErrorListener() {
@@ -137,9 +137,7 @@ public class Favorites extends AppCompatActivity implements BottomNavigationView
             }
         });
 
-
         // Add the request to the RequestQueue.
-
         queue.add(serverRequest);
 
     }

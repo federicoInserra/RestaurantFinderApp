@@ -1,8 +1,7 @@
 package com.example.restaurantsfinder;
 
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
 
+import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -11,19 +10,16 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
-import android.os.Bundle;
+
 import android.os.Looper;
-import android.os.StrictMode;
+
 import android.provider.Settings;
-import android.util.Log;
+
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ArrayAdapter;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -33,7 +29,7 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.StringRequest;
+
 import com.android.volley.toolbox.Volley;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -42,35 +38,13 @@ import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.android.libraries.places.api.Places;
-import com.google.android.libraries.places.api.model.Place;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 
-
-import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.maps.GeoApiContext;
-import com.google.maps.PlacesApi;
-import com.google.maps.errors.ApiException;
-import com.google.maps.model.PlaceType;
-import com.google.maps.model.PlacesSearchResponse;
-import com.google.maps.model.PlacesSearchResult;
-import com.google.maps.model.RankBy;
-import com.google.maps.model.LatLng;
-import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 
 
@@ -81,30 +55,25 @@ public class DisplayRestaurants extends AppCompatActivity implements ActivityCom
 
     private Double latitude, longitude;
 
-    
-    private static final String APIKeyGoogle = "INSERT API";
+    private static final String APIKeyGoogle = "YOUR API KEY";
 
-    // https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=-33.8670522,151.1957362&radius=1500&type=restaurant&keyword=cruise&key=YOUR_API_KEY
+    // URL of api places to search nearby restaurants
     private String api_url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?";
 
 
-
     // Initializing other items
-
-
     int PERMISSION_ID = 44;
 
     private RequestQueue queue;
 
     private List<Restaurant> restaurants;
 
-    FusedLocationProviderClient mFusedLocationClient;
+    private FusedLocationProviderClient mFusedLocationClient;
 
 
     // Initialize recycler view to display restaurants
     private RecyclerView recyclerView;
     RecyclerView.Adapter mAdapter;
-
 
 
 
@@ -117,12 +86,12 @@ public class DisplayRestaurants extends AppCompatActivity implements ActivityCom
         // Instantiate the RequestQueue.
         queue = Volley.newRequestQueue(DisplayRestaurants.this);
 
-        BottomNavigationView bottomNavigationView = findViewById(R.id.bottomNavigationViewRes);
-        bottomNavigationView.setSelectedItemId(R.id.bottom_res); // se non va provare a cambiare questo
-        bottomNavigationView.setOnNavigationItemSelectedListener(this);
-
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
+        // Initialize bottom nav bar
+        BottomNavigationView bottomNavigationView = findViewById(R.id.bottomNavigationViewRes);
+        bottomNavigationView.setSelectedItemId(R.id.bottom_res);
+        bottomNavigationView.setOnNavigationItemSelectedListener(this);
 
 
         restaurants = new ArrayList<>();
@@ -133,12 +102,14 @@ public class DisplayRestaurants extends AppCompatActivity implements ActivityCom
         RecyclerView.LayoutManager layoutManager;
         layoutManager = new LinearLayoutManager(DisplayRestaurants.this);
         recyclerView.setLayoutManager(layoutManager);
-        //recyclerView.setHasFixedSize(true);
+
         recyclerView.setAdapter(mAdapter);
 
         showProgressBar();
+
+        // Retrieve user position
         requestNewLocationData();
-        //getLastLocation();
+
 
 
 
@@ -206,9 +177,14 @@ public class DisplayRestaurants extends AppCompatActivity implements ActivityCom
         public void onLocationResult(LocationResult locationResult) {
             Location mLastLocation = locationResult.getLastLocation();
 
+            // Get long and lat
             longitude = mLastLocation.getLongitude();
             latitude = mLastLocation.getLatitude();
+
+            // Compose the url with lat and long
             String url = composeUrl();
+
+            // Call google places api to retrieve nearby restaurants
             callRestaurantApi(url);
 
         }
@@ -251,11 +227,10 @@ public class DisplayRestaurants extends AppCompatActivity implements ActivityCom
 
 
     private String composeUrl(){
+
         // https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=-33.8670522,151.1957362&radius=1500&type=restaurant&keyword=cruise&key=YOUR_API_KEY
         String url;
         url = api_url + "location="+latitude+","+longitude+"&radius=1000&type=restaurant&key="+APIKeyGoogle;
-        System.out.println("QUESTO E L'URL");
-        System.out.println(url);
 
         return url;
     }
@@ -263,19 +238,14 @@ public class DisplayRestaurants extends AppCompatActivity implements ActivityCom
 
     private void callRestaurantApi(String url){
 
-
-
         JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.GET, url, null,
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
-                        // LIST OF RESTAURANTS
-                        System.out.println(response);
-
 
                         try {
                             JSONArray results = response.getJSONArray("results");
-                            System.out.println(results);
+
 
                             int numberToDisplay = 50;
                             if(results.length() < 50){
@@ -299,6 +269,7 @@ public class DisplayRestaurants extends AppCompatActivity implements ActivityCom
                         }
 
                         hideProgressBar();
+                        // Notify recycler view that dataset changed
                         mAdapter.notifyDataSetChanged();
 
                     }
@@ -351,8 +322,6 @@ public class DisplayRestaurants extends AppCompatActivity implements ActivityCom
     private void showProgressBar() {
         findViewById(R.id.progressBarRestaurant).setVisibility(View.VISIBLE);
     }
-
-
 
 
 }

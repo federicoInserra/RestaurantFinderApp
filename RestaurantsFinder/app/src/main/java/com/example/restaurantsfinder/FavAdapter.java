@@ -6,7 +6,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import androidx.annotation.NonNull;
+
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.volley.Request;
@@ -20,8 +20,6 @@ import com.google.firebase.auth.FirebaseAuth;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.util.ArrayList;
 import java.util.List;
 
 public class FavAdapter extends RecyclerView.Adapter<FavAdapter.ViewHolder> {
@@ -40,10 +38,6 @@ public class FavAdapter extends RecyclerView.Adapter<FavAdapter.ViewHolder> {
         public View layout;
 
 
-
-
-
-
         public ViewHolder(View v) {
             super(v);
             layout = v;
@@ -53,13 +47,11 @@ public class FavAdapter extends RecyclerView.Adapter<FavAdapter.ViewHolder> {
             vicinity = v.findViewById(R.id.vicinityTextFav);
             delete = v.findViewById(R.id.deleteButton);
 
-
-
         }
     }
 
-    public FavAdapter(List<Restaurant> myDataset){ favs = myDataset; }
 
+    public FavAdapter(List<Restaurant> myDataset){ favs = myDataset; }
 
     @Override
     public FavAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -97,7 +89,6 @@ public class FavAdapter extends RecyclerView.Adapter<FavAdapter.ViewHolder> {
         });
 
 
-
     }
 
     @Override
@@ -117,6 +108,7 @@ public class FavAdapter extends RecyclerView.Adapter<FavAdapter.ViewHolder> {
 
         try {
 
+            // Prepare data to remove restaurant from user favorites
             userID = FirebaseAuth.getInstance().getCurrentUser().getEmail();
             postData.put("userID", userID);
             postData.put("name", restaurant.name);
@@ -131,7 +123,6 @@ public class FavAdapter extends RecyclerView.Adapter<FavAdapter.ViewHolder> {
 
                 System.out.println(response);
 
-
             }
         }, new Response.ErrorListener() {
             @Override
@@ -141,10 +132,7 @@ public class FavAdapter extends RecyclerView.Adapter<FavAdapter.ViewHolder> {
             }
         });
 
-
         // Add the request to the RequestQueue.
-
         queue.add(serverRequest);
-
     }
 }
